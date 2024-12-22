@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        label, input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .feedback-list {
+            margin-top: 40px;
+            border-top: 2px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .feedback-item {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .feedback-item h3 {
+            margin: 0 0 10px 0;
+        }
+
+        .feedback-item p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Submit Your Feedback</h1>
+
+    <!-- Feedback Form -->
+    <form id="feedback-form">
+        {% csrf_token %}
+        <label for="username">Your Name:</label>
+        <input type="text" id="username" name="username" placeholder="Enter your name" required>
+
+        <label for="message">Your Feedback:</label>
+        <textarea id="message" name="message" rows="4" placeholder="Enter your feedback" required></textarea>
+
+        <label for="rating">Rating (1-5):</label>
+        <select id="rating" name="rating" required>
+            <option value="5">5 - Excellent</option>
+            <option value="4">4 - Good</option>
+            <option value="3">3 - Average</option>
+            <option value="2">2 - Poor</option>
+            <option value="1">1 - Terrible</option>
+        </select>
+
+        <button type="submit">Submit Feedback</button>
+    </form>
+
+    <!-- List of Feedbacks -->
+    <div class="feedback-list" id="feedback-list">
+        <h2>All Feedbacks:</h2>
+        <!-- Feedbacks will appear here -->
+    </div>
+
+    <script>
+        // Submit the feedback form data using fetch API
+        const form = document.getElementById('feedback-form');
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const message = document.getElementById('message').value;
+            const rating = document.getElementById('rating').value;
+
+            // Get CSRF token from the cookie
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch('/submit_feedback/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,  // Include the CSRF token here
+                },
+                body: JSON.stringify({
+                    username: username,
+                    message: message,
+                    rating: rating
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || data.error);
+                if (data.message) {
+                    // Dynamically add the new feedback to the feedback list
+                    const feedbackItem = document.createElement('div');
+                    feedbackItem.classList.add('feedback-item');
+                    feedbackItem.innerHTML = `
+                        <h3>${data.username}</h3>
+                        <p>${data.message}</p>
+                        <p>Rating: ${data.rating}</p>
+                    `;
+                    document.getElementById('feedback-list').appendChild(feedbackItem);
+
+                    // Reset the form
+                    form.reset();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting feedback.');
+            });
+        });
+    </script>
+</body>
+</html>
